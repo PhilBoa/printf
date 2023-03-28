@@ -1,71 +1,62 @@
 #include "main.h"
 
+void print_buffer(char buffer[], int *buff_ind);
+
 /**
- * _printf - produces output according to a format.
- * @format: format string
- * Return: number of characters printed
+ * _printf - Printf function
+ * @format: format.
+ * Return: Printed chars.
  */
 
 int _printf(const char *format, ...)
 {
-	va_list argums;
-	int index = 0, counter = 0;
-
-	va_start(argums, format);
-	for (; format[index] != '\0'; index++)
+	int i, printed = 0, printed_chars = 0;
+	int flags, width, precision, size, buff_ind = 0;
+	va_list list;
+	char buffer[BUFF_SIZE];
+	
+	if (format == NULL)
+	return (-1);
+	va_start(list, format);
+	for (i = 0; format && format[i] != '\0'; i++)
 	{
-	if (format[index] == '%')
+	if (format[i] != '%')
 	{
-	switch (format[index + 1])
+	buffer[buff_ind++] = format[i];
+	if (buff_ind == BUFF_SIZE)
+	print_buffer(buffer, &buff_ind);
+	/* write(1, &format[i], 1);*/
+	printed_chars++;
+	}
+	else
 	{
-	case 'c':
-	counter += _putchar(va_arg(argums, int));
-	index++;
-	break;
-	case 's':
-	counter += _puts(va_arg(argums, char *));
-	index++;
-	break;
-	case '%':
-	counter += _putchar('%');
-	index++;
-	break;
+	print_buffer(buffer, &buff_ind);
+	flags = get_flags(format, &i);
+	width = get_width(format, &i, list);
+	precision = get_precision(format, &i, list);
+	size = get_size(format, &i);
+	++i;
+	printed = handle_print(format, &i, list, buffer,
+	flags, width, precision, size);
+	if (printed == -1)
+	return (-1);
+	printed_chars += printed;
 	}
-	continue;
 	}
-	counter += _putchar(format[index]);
-	}
-	va_end(argums);
-	return (counter);
+	print_buffer(buffer, &buff_ind);
+	va_end(list);
+	return (printed_chars);
 }
 
 /**
- * _putchar - writes the character c to stdout
- * @c: The character to print
- *
- * Return: On success 1.
- * On error, -1 is returned, and errno is set appropriately.
+ * print_buffer - Prints the contents of the buffer if it exist
+ * @buffer: Array of chars
+ * @buff_ind: Index at which to add next char, represents the length.
  */
 
-int _putchar(char c)
+void print_buffer(char buffer[], int *buff_ind)
 {
-return (write(1, &c, 1));
-}
-
-/**
- * _puts - prints a string, followed by a new line, to stdout.
- * @s: pointer
- * Return: number of characters printed
- */
-
-int _puts(char *s)
-{
-	int index = 0;
-
-	while (s[index] != 0)
-	{
-	_putchar(s[index]);
-	index++;
-	}
-	return (index);
+	if (*buff_ind > 0)
+	write(1, &buffer[0], *buff_ind);
+	*buff_ind = 0;
 }
